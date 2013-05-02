@@ -1,24 +1,5 @@
+Project for the Networked Smart Systems course at the university of Twente.
+By Max Kerkers and Mart Meijerink.
 
-  Arduino
-  Project
-  ----------------------------------
-  Developed with embedXcode
-
-  Project Arduino
-  Created by Mart Meijerink on 02-05-13
-  Copyright © 2013 Mart Meijerink
-  Licence CC = BY SA NC
-
-
-  References
-  ----------------------------------
-
-
-
-  embedXcode
-  ----------------------------------
-  Embedded Computing Template on Xcode 4
-  Copyright © Rei VILO, 2010-2013
-  Licence CC = BY NC SA
-  http://embedXcode.weebly.com/
-
+This project oriented course gave us the opportunity to get familiar with Arduino.
+Finally we had to build a localization mechanism with multiple Arduino's. 
