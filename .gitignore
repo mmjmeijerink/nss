@@ -1,2 +1,3 @@
 *.xcodeproj
 Arduino/Arduino/Builds/*
+Arduino/Arduino/.DS_Store
