@@ -32,7 +32,7 @@
 # SERIAL_BAUDRATE for the serial console, 9600 by default
 # Uncomment and specify another speed
 #
-SERIAL_BAUDRATE = 56700
+SERIAL_BAUDRATE = 57600
 
 
 # Libraries

@@ -59,6 +59,14 @@ const char* role_friendly_name[] = { "invalid", "Ping out", "Pong back"};
 // The role of the current running sketch
 role_e role;
 
+int total, packetSent, received;
+
+void printLog(int total, int packetSent, int received) {
+	printf("Tried to send %d packets\n\r", total);
+	printf("ACKed %d packets\n\r", packetSent);
+	printf("Received %d responses\n\r", received);
+}
+
 void setup(void)
 {
 	//
@@ -90,11 +98,11 @@ void setup(void)
 	//
 	
 	radio.begin();
-	radio.setChannel(97);
+	radio.setChannel(62);
 	radio.setPALevel(RF24_PA_MAX);
 	
 	// optionally, increase the delay between retries & # of retries
-	radio.setRetries(15,15);
+	radio.setRetries(5,0);
 	
 	// optionally, reduce the payload size.  seems to
 	// improve reliability
@@ -131,6 +139,10 @@ void setup(void)
 	//
 	
 	radio.printDetails();
+	
+	total = 0;
+	packetSent = 0;
+	received = 0;
 }
 
 void loop(void)
@@ -139,18 +151,23 @@ void loop(void)
 	// Ping out role.  Repeatedly send the current time
 	//
 	
-	if (role == role_ping_out)
+	if (role == role_ping_out and total < 1000)
 	{
 		// First, stop listening so we can talk.
 		radio.stopListening();
 		
 		// Take the time, and send it.  This will block until complete
 		unsigned long time = millis();
-		printf("Now sending %lu...",time);
+		total++;
+		if(total % 100 == 0)
+			printf("%d: Now sending %lu...", total, time);
 		bool ok = radio.write( &time, sizeof(unsigned long) );
 		
-		if (ok)
-			printf("ok...");
+		if (ok) {
+			packetSent++;
+			if(total % 100 == 0)
+				printf("ok...");
+		}
 		else
 			printf("failed.\n\r");
 		
@@ -173,14 +190,20 @@ void loop(void)
 		{
 			// Grab the response, compare, and send to debugging spew
 			unsigned long got_time;
-			radio.read( &got_time, sizeof(unsigned long) );
+			bool receivedOk = radio.read( &got_time, sizeof(unsigned long) );
+			
+			if (receivedOk) received++;
 			
 			// Spew it
-			printf("Got response %lu, round-trip delay: %lu\n\r",got_time,millis()-got_time);
+			if(total % 100 == 0)
+				printf("Got response %d: %lu, round-trip delay: %lu\n\r", received, got_time,millis()-got_time);
 		}
 		
 		// Try again 1s later
-		delay(1000);
+		delay(50);
+	} else if (role == role_ping_out and total == 1000) {
+		printLog(total, packetSent, received);
+		total++;
 	}
 	
 	//
@@ -201,7 +224,7 @@ void loop(void)
 				done = radio.read( &got_time, sizeof(unsigned long) );
 				
 				// Spew it
-				printf("Got payload %lu...",got_time);
+				//printf("Got payload %lu...",got_time);
 				
 				// Delay just a little bit to let the other unit
 				// make the transition to receiver
@@ -213,7 +236,7 @@ void loop(void)
 			
 			// Send the final one back.
 			radio.write( &got_time, sizeof(unsigned long) );
-			printf("Sent response.\n\r");
+			//printf("Sent response.\n\r");
 			
 			// Now, resume listening so we catch the next packets.
 			radio.startListening();
