@@ -38,8 +38,8 @@ const int ping_pin = 7, pong_pin = 8;
 //
 
 // Radio pipe addresses for the 2 nodes to communicate.
-const uint64_t pipes[4] = { 0x3210FEDCBALL, 0x6789ABCDEFLL, 0xABCDEF0123LL, 0x3210FEDC03LL };
-//const uint64_t pipes[3] = { 0xABCD012301LL , 0xABCD0123ABLL, 0xABCD0123EFLL };
+const uint64_t pipes[4] = {0x3210FEDCBALL, 0x6789ABCDEFLL, 0xABCDEF0123LL, 0x3210FEDC03LL};
+//const uint64_t pipes[3] = {0xABCD012301LL , 0xABCD0123ABLL, 0xABCD0123EFLL};
 
 //
 // Role management
@@ -55,7 +55,7 @@ const uint64_t pipes[4] = { 0x3210FEDCBALL, 0x6789ABCDEFLL, 0xABCDEF0123LL, 0x32
 typedef enum { role_ping_out = 1, role_forward, role_pong_back } role_e;
 
 // The debug-friendly names of those roles
-const char* role_friendly_name[] = { "invalid", "Node A", "Hub", "Node B"};
+const char* role_friendly_name[] = {"invalid", "Node A", "Hub", "Node B"};
 
 // The role of the current running sketch
 role_e role;
@@ -98,7 +98,6 @@ void setup(void)
 	
 	Serial.begin(57600);
 	printf_begin();
-	printf("\n\rRF24/examples/pingpair/\n\r");
 	printf("ROLE: %s\n\r",role_friendly_name[role]);
 	
 	//
