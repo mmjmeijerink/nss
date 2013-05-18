@@ -41,6 +41,10 @@ state SynchronisedNode::getState() {
     return _state;
 }
 
+void SynchronisedNode::setState(state state) {
+	_state = state;
+}
+
 unsigned long SynchronisedNode::getCounter() {
 	return counter;
 }
@@ -58,6 +62,10 @@ void SynchronisedNode::raiseCounter(unsigned long value) {
 
 unsigned long SynchronisedNode::getFrequency() {
 	return FREQUENCY;
+}
+
+unsigned long SynchronisedNode::getTimeoutTime() {
+	return TIMEOUTTIME;
 }
 
 unsigned long SynchronisedNode::getBroadcastTime() {
@@ -90,17 +98,32 @@ void SynchronisedNode::checkLedStatus() {
 
 // Broadcast functions
 void SynchronisedNode::sendBroadcast() {
-	ID
-	Counter
-	isLastBroadcast
-	//check broadcastsSend here?
-	broadcastsSend++
+	if (_state == BROADCASTING && !broadcastDone && counter >= broadcastTime) {
+		broadcastsSend++;
+		Message broadcast(_nodeID, broadcastTime, broadcastsSend == BROADCASTS);
+	}
 	
 	setBroadcastDone(true);
+	
+	if (broadcastsSend == BROADCASTS) {
+		_state = QUIET;
+		broadcastsSend = 0;
+	}
 }
 
-/*
-void SynchronisedNode::handleBroadcastMessage(<TYPEOFBROADCASTMSG> msg) {
-	
+
+void SynchronisedNode::handleBroadcastMessage(Message *msg) {
+	if (_state == BROADCASTING) {
+		if (msg->getNodeID() < _nodeID) {
+			_state == LISTENING;
+		}
+	} else if (_state == QUIET) {
+		counter += 0.1 * (counter - msg->getBroadcastTime());
+	} else if (_state == LISTENING) {
+		counter += 0.1 * (counter - msg->getBroadcastTime());
+		
+		if (msg->getNodeID() > _nodeID) {
+			_state == LISTENING;
+		}
+	}
 }
-*/

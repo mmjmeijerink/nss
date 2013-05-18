@@ -1,5 +1,5 @@
 ///
-/// @file	SynchronisedNode.h
+/// @file	Message.h
 /// @brief	Class library header
 /// @details	<#details#>
 /// @n
@@ -8,7 +8,7 @@
 ///
 /// @author	Mart Meijerink
 /// @author	Mart Meijerink
-/// @date	15-05-13 14:26
+/// @date	18-05-13 01:33
 /// @version	<#version#>
 ///
 /// @copyright	© Mart Meijerink, 2013
@@ -37,55 +37,20 @@
 #include "WProgram.h"
 #endif // end IDE
 
-#ifndef SynchronisedNode_h
-#define SynchronisedNode_h
+#ifndef Message_h
+#define Message_h
 
-#include "Message.h"
-#include "RF24.h"
-
-typedef enum {BROADCASTING = 0, QUIET, LISTENING} state;
-
-const int FREQUENCY		=	10000;
-const int BROADCASTS	=	5;
-const int TIMEOUTTIME	=	5 * FREQUENCY;
-
-class SynchronisedNode {
+class Message {
 private:
 	int				_nodeID;
-	state			_state;
-	unsigned long	counter;
-	unsigned long	broadcastTime;
-	int				broadcastsSend;
-	bool			broadcastDone;
-	
-	// LED variables
-	uint8_t			_ledPin;
-	unsigned long	blinkTime;
-	unsigned long	ledTurnedOn;
-	
+	unsigned long	_broadcastTime;
+	bool			_isLastBroadcast;
+  
 public:
-	SynchronisedNode(int ID, uint8_t ledPin);
-	
-	// Getters & Setters
+	Message(int nodeID, unsigned long broadcastTime, bool isLastBroadcast);
 	int				getNodeID(void);
-	state			getState(void);
-	void			setState(state);
-	unsigned long	getCounter(void);
-	void			raiseCounter(unsigned long value);
-	unsigned long	getFrequency(void);
-	unsigned long	getTimeoutTime(void);
 	unsigned long	getBroadcastTime(void);
-	int				getBroadcastsSend(void);
-	bool			getBroadcastDone(void);
-	void			setBroadcastDone(bool done);
-	
-	// LED functions
-	void			blinkLed(void);
-	void			checkLedStatus(void);
-	
-	// Broadcast functions
-	void			sendBroadcast(void);
-	void			handleBroadcastMessage(Message *msg);
+	bool			isLastBroadcast(void);
 };
 
 #endif
