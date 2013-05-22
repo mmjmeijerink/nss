@@ -40,7 +40,7 @@
 #ifndef SynchronisedNode_h
 #define SynchronisedNode_h
 
-#include "Message.h"
+#include "Broadcast.h"
 #include "RF24.h"
 
 typedef enum {BROADCASTING = 0, QUIET, LISTENING} state;
@@ -58,13 +58,16 @@ private:
 	int				broadcastsSend;
 	bool			broadcastDone;
 	
+	// Radio variables
+	RF24*			_radio;
+	
 	// LED variables
 	uint8_t			_ledPin;
 	unsigned long	blinkTime;
 	unsigned long	ledTurnedOn;
 	
 public:
-	SynchronisedNode(int ID, uint8_t ledPin);
+	SynchronisedNode(int ID, RF24 *radio, uint8_t ledPin);
 	
 	// Getters & Setters
 	int				getNodeID(void);
@@ -77,7 +80,7 @@ public:
 	unsigned long	getBroadcastTime(void);
 	int				getBroadcastsSend(void);
 	bool			getBroadcastDone(void);
-	void			setBroadcastDone(bool done);
+	RF24*			getRadio(void);
 	
 	// LED functions
 	void			blinkLed(void);
@@ -85,7 +88,7 @@ public:
 	
 	// Broadcast functions
 	void			sendBroadcast(void);
-	void			handleBroadcastMessage(Message *msg);
+	void			handleBroadcast(Broadcast *msg);
 };
 
 #endif

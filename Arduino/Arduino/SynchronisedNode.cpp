@@ -19,7 +19,7 @@
 
 #include "SynchronisedNode.h"
 
-SynchronisedNode::SynchronisedNode(int NodeID, uint8_t ledPin) {
+SynchronisedNode::SynchronisedNode(int NodeID, RF24 *radio, uint8_t ledPin) {
     _nodeID = NodeID;
 	_state = BROADCASTING;
 	counter = 0;
@@ -27,6 +27,10 @@ SynchronisedNode::SynchronisedNode(int NodeID, uint8_t ledPin) {
 	broadcastsSend = 0;
 	broadcastDone = false;
 	
+	// Radio setup
+	_radio = radio;
+	
+	// LED setup
 	pinMode(ledPin, OUTPUT);
 	_ledPin = ledPin;
 	blinkTime = 1000;
@@ -42,7 +46,13 @@ state SynchronisedNode::getState() {
 }
 
 void SynchronisedNode::setState(state state) {
+	if (_state == BROADCASTING) {
+		broadcastsSend = 0;
+		broadcastDone = false;
+	}
+	
 	_state = state;
+	radioAdjustToState(_state);
 }
 
 unsigned long SynchronisedNode::getCounter() {
@@ -56,7 +66,7 @@ void SynchronisedNode::raiseCounter(unsigned long value) {
 	
 	if ((oldCounter > counter && oldCounter != FREQUENCY) || counter == FREQUENCY) {
 		blinkLed();
-		setBroadcastDone(false);
+		broadcastDone = false;
 	}
 }
 
@@ -80,9 +90,10 @@ bool SynchronisedNode::getBroadcastDone() {
 	return broadcastDone;
 }
 
-void SynchronisedNode::setBroadcastDone(bool done) {
-	broadcastDone = done;
+RF24* SynchronisedNode::getRadio() {
+	return _radio;
 }
+
 
 // LED functions
 void SynchronisedNode::blinkLed() {
@@ -96,34 +107,37 @@ void SynchronisedNode::checkLedStatus() {
 	}
 }
 
+
 // Broadcast functions
 void SynchronisedNode::sendBroadcast() {
 	if (_state == BROADCASTING && !broadcastDone && counter >= broadcastTime) {
 		broadcastsSend++;
-		Message broadcast(_nodeID, broadcastTime, broadcastsSend == BROADCASTS);
+		Broadcast broadcast(_nodeID, broadcastTime, broadcastsSend == BROADCASTS);
+		_radio->stopListening();
+		_radio->write(&broadcast, sizeof(broadcast));
+		_radio->startListening();
 	}
 	
-	setBroadcastDone(true);
+	broadcastDone = true;
 	
 	if (broadcastsSend == BROADCASTS) {
-		_state = QUIET;
+		setState(QUIET);
 		broadcastsSend = 0;
+		broadcastDone = false;
 	}
 }
 
-
-void SynchronisedNode::handleBroadcastMessage(Message *msg) {
+void SynchronisedNode::handleBroadcast(Broadcast *msg) {
 	if (_state == BROADCASTING) {
 		if (msg->getNodeID() < _nodeID) {
-			_state == LISTENING;
-		}
+			setState(LISTENING);		}
 	} else if (_state == QUIET) {
 		counter += 0.1 * (counter - msg->getBroadcastTime());
 	} else if (_state == LISTENING) {
 		counter += 0.1 * (counter - msg->getBroadcastTime());
 		
 		if (msg->getNodeID() > _nodeID) {
-			_state == LISTENING;
+			setState(BROADCASTING);
 		}
 	}
 }

@@ -1,5 +1,5 @@
 //
-// Message.cpp 
+// Broadcast.cpp 
 // Class library C++ code
 // ----------------------------------
 // Developed with embedXcode 
@@ -14,25 +14,25 @@
 // Copyright © Mart Meijerink, 2013
 // Licence CC = BY NC SA
 //
-// See Message.h and ReadMe.txt for references
+// See Broadcast.h and ReadMe.txt for references
 //
 
-#include "Message.h"
+#include "Broadcast.h"
 
-Message::Message(int nodeID, unsigned long broadcastTime, bool isLastBroadcast) {
+Broadcast::Broadcast(int nodeID, unsigned long broadcastTime, bool isLastBroadcast) {
 	_nodeID = nodeID;
 	_broadcastTime = broadcastTime;
 	_isLastBroadcast = isLastBroadcast;
 }
 
-int Message::getNodeID() {
+int Broadcast::getNodeID() {
 	return _nodeID;
 }
 
-unsigned long Message::getBroadcastTime() {
+unsigned long Broadcast::getBroadcastTime() {
 	return _broadcastTime;
 }
 
-bool Message::isLastBroadcast() {
+bool Broadcast::isLastBroadcast() {
 	return _isLastBroadcast;
 }

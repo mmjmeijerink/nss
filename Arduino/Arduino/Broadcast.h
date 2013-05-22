@@ -1,5 +1,5 @@
 ///
-/// @file	Message.h
+/// @file	Broadcast.h
 /// @brief	Class library header
 /// @details	<#details#>
 /// @n
@@ -37,17 +37,17 @@
 #include "WProgram.h"
 #endif // end IDE
 
-#ifndef Message_h
-#define Message_h
+#ifndef Broadcast_h
+#define Broadcast_h
 
-class Message {
+class Broadcast {
 private:
 	int				_nodeID;
 	unsigned long	_broadcastTime;
 	bool			_isLastBroadcast;
   
 public:
-	Message(int nodeID, unsigned long broadcastTime, bool isLastBroadcast);
+	Broadcast(int nodeID, unsigned long broadcastTime, bool isLastBroadcast);
 	int				getNodeID(void);
 	unsigned long	getBroadcastTime(void);
 	bool			isLastBroadcast(void);
