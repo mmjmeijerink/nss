@@ -51,44 +51,44 @@ const int	TIMEOUTTIME	=	10 * FREQUENCY;
 
 class SynchronisedNode {
 private:
-	int				_nodeID;
-	state			_state;
-	int				counter;
-	int				broadcastTime;
-	int				broadcastsSend;
-	bool			broadcastDone;
+	int		_nodeID;
+	state	_state;
+	int		counter;
+	int		broadcastTime;
+	int		broadcastsSend;
+	bool	broadcastDone;
 	
 	// Radio variables
-	RF24*			_radio;
+	RF24*	_radio;
 	
 	// LED variables
-	uint8_t			_ledPin;
-	unsigned long	blinkTime;
-	unsigned long	ledTurnedOn;
+	uint8_t	_ledPin;
+	int		blinkTime;
+	int		ledTurnedOn;
 	
 public:
 	SynchronisedNode(int ID, RF24 *radio, uint8_t ledPin);
 	
 	// Getters & Setters
-	int				getNodeID(void);
-	state			getState(void);
-	void			setState(state);
-	unsigned long	getCounter(void);
-	void			raiseCounter(unsigned long value);
-	unsigned long	getFrequency(void);
-	unsigned long	getTimeoutTime(void);
-	unsigned long	getBroadcastTime(void);
-	int				getBroadcastsSend(void);
-	bool			getBroadcastDone(void);
-	RF24*			getRadio(void);
+	int		getNodeID(void);
+	state	getState(void);
+	void	setState(state);
+	int		getCounter(void);
+	void	raiseCounter(unsigned long value);
+	int		getFrequency(void);
+	int		getTimeoutTime(void);
+	int		getBroadcastTime(void);
+	int		getBroadcastsSend(void);
+	bool	getBroadcastDone(void);
+	RF24*	getRadio(void);
 	
 	// LED functions
-	void			blinkLed(void);
-	void			checkLedStatus(void);
+	void	blinkLed(void);
+	void	checkLedStatus(void);
 	
 	// Broadcast functions
-	void			sendBroadcast(void);
-	void			handleBroadcast(Broadcast *msg);
+	void	sendBroadcast(void);
+	void	handleBroadcast(Broadcast *msg);
 };
 
 #endif

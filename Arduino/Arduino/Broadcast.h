@@ -42,15 +42,15 @@
 
 class Broadcast {
 private:
-	int				_nodeID;
-	unsigned long	_broadcastTime;
-	bool			_isLastBroadcast;
+	int		_nodeID;
+	int		_broadcastTime;
+	bool	_isLastBroadcast;
 	
 public:
 	Broadcast(int nodeID, int broadcastTime, bool isLastBroadcast);
-	int				getNodeID(void);
-	int				getBroadcastTime(void);
-	bool			isLastBroadcast(void);
+	int		getNodeID(void);
+	int		getBroadcastTime(void);
+	bool	isLastBroadcast(void);
 };
 
 #endif

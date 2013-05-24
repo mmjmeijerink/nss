@@ -55,12 +55,12 @@ void SynchronisedNode::setState(state state) {
 	_state = state;
 }
 
-unsigned long SynchronisedNode::getCounter() {
+int SynchronisedNode::getCounter() {
 	return counter;
 }
 
-void SynchronisedNode::raiseCounter(unsigned long value) {
-	unsigned long oldCounter = counter;
+void SynchronisedNode::raiseCounter(int value) {
+	int oldCounter = counter;
 	counter += value;
 	counter = counter % FREQUENCY;
 	
@@ -70,15 +70,15 @@ void SynchronisedNode::raiseCounter(unsigned long value) {
 	}
 }
 
-unsigned long SynchronisedNode::getFrequency() {
+int SynchronisedNode::getFrequency() {
 	return FREQUENCY;
 }
 
-unsigned long SynchronisedNode::getTimeoutTime() {
+int SynchronisedNode::getTimeoutTime() {
 	return TIMEOUTTIME;
 }
 
-unsigned long SynchronisedNode::getBroadcastTime() {
+int SynchronisedNode::getBroadcastTime() {
 	return broadcastTime;
 }
 
