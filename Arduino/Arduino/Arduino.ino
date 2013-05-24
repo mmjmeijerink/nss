@@ -145,7 +145,7 @@ void setup(void) {
 	pinMode(7, OUTPUT);
 	digitalWrite(7, HIGH);
 	
-	int ID = !digitalRead(4)*8 + !digitalRead(5)*4 + !digitalRead(6)*2 + !digitalRead(7)*1;
+	int ID = !digitalRead(4) * 8 + !digitalRead(5) * 4 + !digitalRead(6) * 2 + !digitalRead(7);
 	node = new SynchronisedNode(ID, &radio, LEDPIN);
 	
 	// Prepare the radio

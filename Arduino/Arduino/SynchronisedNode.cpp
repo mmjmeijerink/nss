@@ -129,7 +129,7 @@ void SynchronisedNode::sendBroadcast() {
 }
 
 void SynchronisedNode::handleBroadcast(Broadcast *msg) {
-	printf("Broadcast Received at %d \n\rmsg->getNodeID(): %d\n\rmsg->getBroadcastTime(): %lu \n\rmsg->isLastBroadcast(): %d \n\r\n", counter, msg->getNodeID(), msg->getBroadcastTime(), msg->isLastBroadcast());
+	printf("Broadcast Received at %d \n\rmsg->getNodeID(): %d\n\rmsg->getBroadcastTime(): %d \n\rmsg->isLastBroadcast(): %d \n\r\n", counter, msg->getNodeID(), msg->getBroadcastTime(), msg->isLastBroadcast());
 	
 	raiseCounter(0.4 * (msg->getBroadcastTime() - counter));
 	

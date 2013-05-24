@@ -19,7 +19,7 @@
 
 #include "Broadcast.h"
 
-Broadcast::Broadcast(int nodeID, unsigned long broadcastTime, bool isLastBroadcast) {
+Broadcast::Broadcast(int nodeID, int broadcastTime, bool isLastBroadcast) {
 	_nodeID = nodeID;
 	_broadcastTime = broadcastTime;
 	_isLastBroadcast = isLastBroadcast;
@@ -29,7 +29,7 @@ int Broadcast::getNodeID() {
 	return _nodeID;
 }
 
-unsigned long Broadcast::getBroadcastTime() {
+int Broadcast::getBroadcastTime() {
 	return _broadcastTime;
 }
 

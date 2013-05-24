@@ -53,8 +53,8 @@ class SynchronisedNode {
 private:
 	int				_nodeID;
 	state			_state;
-	unsigned long	counter;
-	unsigned long	broadcastTime;
+	int				counter;
+	int				broadcastTime;
 	int				broadcastsSend;
 	bool			broadcastDone;
 	

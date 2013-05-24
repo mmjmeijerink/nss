@@ -47,9 +47,9 @@ private:
 	bool			_isLastBroadcast;
 	
 public:
-	Broadcast(int nodeID, unsigned long broadcastTime, bool isLastBroadcast);
+	Broadcast(int nodeID, int broadcastTime, bool isLastBroadcast);
 	int				getNodeID(void);
-	unsigned long	getBroadcastTime(void);
+	int				getBroadcastTime(void);
 	bool			isLastBroadcast(void);
 };
 
