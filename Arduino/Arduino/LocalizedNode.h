@@ -1,5 +1,5 @@
 ///
-/// @file	Broadcast.h
+/// @file	LocalizedNode.h
 /// @brief	Class library header
 /// @details	<#details#>
 /// @n
@@ -8,7 +8,7 @@
 ///
 /// @author	Mart Meijerink
 /// @author	Mart Meijerink
-/// @date	18-05-13 01:33
+/// @date	23-05-13 17:22
 /// @version	<#version#>
 ///
 /// @copyright	© Mart Meijerink, 2013
@@ -37,20 +37,15 @@
 #include "WProgram.h"
 #endif // end IDE
 
-#ifndef Broadcast_h
-#define Broadcast_h
+#ifndef LocalizedNode_h
+#define LocalizedNode_h
 
-class Broadcast {
+class LocalizedNode {
 private:
-	int				_nodeID;
-	unsigned long	_broadcastTime;
-	bool			_isLastBroadcast;
+	
 	
 public:
-	Broadcast(int nodeID, unsigned long broadcastTime, bool isLastBroadcast);
-	int				getNodeID(void);
-	unsigned long	getBroadcastTime(void);
-	bool			isLastBroadcast(void);
+	LocalizedNode();
 };
 
 #endif

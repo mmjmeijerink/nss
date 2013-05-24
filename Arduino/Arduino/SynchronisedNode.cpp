@@ -31,9 +31,9 @@ SynchronisedNode::SynchronisedNode(int NodeID, RF24 *radio, uint8_t ledPin) {
 	_radio = radio;
 	
 	// LED setup
-	pinMode(ledPin, OUTPUT);
+	//pinMode(ledPin, OUTPUT);
 	_ledPin = ledPin;
-	blinkTime = 1000;
+	blinkTime = 500;
 }
 
 // Getters & Setters
@@ -52,7 +52,6 @@ void SynchronisedNode::setState(state state) {
 	}
 	
 	_state = state;
-	radioAdjustToState(_state);
 }
 
 unsigned long SynchronisedNode::getCounter() {
@@ -64,7 +63,7 @@ void SynchronisedNode::raiseCounter(unsigned long value) {
 	counter += value;
 	counter = counter % FREQUENCY;
 	
-	if ((oldCounter > counter && oldCounter != FREQUENCY) || counter == FREQUENCY) {
+	if ((oldCounter > counter && oldCounter != 0) || counter == 0) {
 		blinkLed();
 		broadcastDone = false;
 	}
@@ -99,9 +98,11 @@ RF24* SynchronisedNode::getRadio() {
 void SynchronisedNode::blinkLed() {
 	digitalWrite(_ledPin, HIGH);
 	ledTurnedOn = millis();
+	//if(counter % 100 == 0) printf("Led aangezet om: %u \n\r", ledTurnedOn);
 }
 
 void SynchronisedNode::checkLedStatus() {
+	//if(counter % 100 == 0) printf("Led status check om: %u \n\rTijd aan: %u \n\r", millis(), millis() - ledTurnedOn);
 	if (millis() - ledTurnedOn >= blinkTime) {
 		digitalWrite(_ledPin, LOW);
 	}
@@ -119,6 +120,7 @@ void SynchronisedNode::sendBroadcast() {
 	}
 	
 	broadcastDone = true;
+	printf("Broadcast #%d sent\n\r", broadcastsSend);
 	
 	if (broadcastsSend == BROADCASTS) {
 		setState(QUIET);
@@ -133,10 +135,14 @@ void SynchronisedNode::handleBroadcast(Broadcast *msg) {
 			setState(LISTENING);		}
 	} else if (_state == QUIET) {
 		counter += 0.1 * (counter - msg->getBroadcastTime());
+		
+		if (msg->getNodeID() < _nodeID) {
+			setState(LISTENING);
+		}
 	} else if (_state == LISTENING) {
 		counter += 0.1 * (counter - msg->getBroadcastTime());
 		
-		if (msg->getNodeID() > _nodeID) {
+		if (msg->getNodeID() == _nodeID - 1 && msg->isLastBroadcast()) || msg->getNodeID() > _nodeID) {
 			setState(BROADCASTING);
 		}
 	}

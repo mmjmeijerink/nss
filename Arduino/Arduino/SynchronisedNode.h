@@ -45,7 +45,7 @@
 
 typedef enum {BROADCASTING = 0, QUIET, LISTENING} state;
 
-const int FREQUENCY		=	10000;
+const int FREQUENCY		=	3000;
 const int BROADCASTS	=	5;
 const int TIMEOUTTIME	=	5 * FREQUENCY;
 
