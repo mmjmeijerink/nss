@@ -39,14 +39,14 @@ unsigned long	lastBroadcastReceived = 0;
 /// Userdefined functions
 ///
 
-void adjustCounter(void) {
+void adjustCounter() {
 	// Raise the counter with the time that has past since last raise
 	unsigned long currentTime = millis();
 	node->raiseCounter(currentTime - lastTime);
 	lastTime = currentTime;
 }
 
-void check(void) {
+void check() {
 	adjustCounter();
 	
 	// BROADCAST
@@ -117,8 +117,10 @@ void check(interval interval) {
 void printDebugInfo() {
 	printf("NodeID: %d \n\r", node->getNodeID());
 	printf("Counter value: %d \n\r", node->getCounter());
-	printf("State: %d \n\r", node->getState());
-	printf("Last broadcast received: %u \n\r\n", lastBroadcastReceived);
+	printf("State: %d \n\r\n", node->getState());
+	
+	printf("BroadcastTime: %u \n\r", node->getBroadcastTime());
+	printf("millis() - lastBroadcastReceived >= node->getTimeoutTime() == %u - %u >= %u  \n\r\n", millis(), lastBroadcastReceived, node->getTimeoutTime());
 }
 
 

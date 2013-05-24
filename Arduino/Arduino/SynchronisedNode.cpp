@@ -33,7 +33,7 @@ SynchronisedNode::SynchronisedNode(int NodeID, RF24 *radio, uint8_t ledPin) {
 	// LED setup
 	//pinMode(ledPin, OUTPUT);
 	_ledPin = ledPin;
-	blinkTime = 500;
+	blinkTime = FREQUENCY / 10;
 }
 
 // Getters & Setters
@@ -121,6 +121,7 @@ void SynchronisedNode::sendBroadcast() {
 	
 	broadcastDone = true;
 	printf("Broadcast #%d sent\n\r", broadcastsSend);
+	printf("BroadcastsSend == BROADCAST => %d == %d \n\r\n", broadcastsSend, BROADCASTS);
 	
 	if (broadcastsSend == BROADCASTS) {
 		setState(QUIET);
@@ -130,6 +131,8 @@ void SynchronisedNode::sendBroadcast() {
 }
 
 void SynchronisedNode::handleBroadcast(Broadcast *msg) {
+	printf("Broadcast Received: \n\rmsg->getNodeID(): %d\n\r msg->getBroadcastTime(): %u \n\r msg->isLastBroadcast(): %d", msg->getNodeID(), msg->getBroadcastTime(), msg->isLastBroadcast());
+	
 	if (_state == BROADCASTING) {
 		if (msg->getNodeID() < _nodeID) {
 			setState(LISTENING);		}
@@ -142,7 +145,7 @@ void SynchronisedNode::handleBroadcast(Broadcast *msg) {
 	} else if (_state == LISTENING) {
 		counter += 0.1 * (counter - msg->getBroadcastTime());
 		
-		if ((msg->getNodeID() == _nodeID - 1 && msg->isLastBroadcast()) || msg->getNodeID() > _nodeID) {
+		if ((msg->getNodeID() == (_nodeID - 1)%16 && msg->isLastBroadcast()) || msg->getNodeID() > _nodeID) {
 			setState(BROADCASTING);
 		}
 	}
