@@ -49,6 +49,7 @@ void SynchronisedNode::setState(state state) {
 	if (_state == BROADCASTING) {
 		broadcastsSend = 0;
 		broadcastDone = false;
+		broadcastTime = random(FREQUENCY);
 	}
 	
 	_state = state;
@@ -63,7 +64,7 @@ void SynchronisedNode::raiseCounter(unsigned long value) {
 	counter += value;
 	counter = counter % FREQUENCY;
 	
-	if ((oldCounter > counter && oldCounter != 0) || counter == 0) {
+	if (counter < oldCounter) {
 		blinkLed();
 		broadcastDone = false;
 	}
@@ -98,11 +99,9 @@ RF24* SynchronisedNode::getRadio() {
 void SynchronisedNode::blinkLed() {
 	digitalWrite(_ledPin, HIGH);
 	ledTurnedOn = millis();
-	//if(counter % 100 == 0) printf("Led aangezet om: %u \n\r", ledTurnedOn);
 }
 
 void SynchronisedNode::checkLedStatus() {
-	//if(counter % 100 == 0) printf("Led status check om: %u \n\rTijd aan: %u \n\r", millis(), millis() - ledTurnedOn);
 	if (millis() - ledTurnedOn >= blinkTime) {
 		digitalWrite(_ledPin, LOW);
 	}
@@ -113,40 +112,30 @@ void SynchronisedNode::checkLedStatus() {
 void SynchronisedNode::sendBroadcast() {
 	if (_state == BROADCASTING && !broadcastDone && counter >= broadcastTime) {
 		broadcastsSend++;
-		Broadcast broadcast(_nodeID, broadcastTime, broadcastsSend == BROADCASTS);
+		Broadcast broadcast(_nodeID, counter, broadcastsSend == BROADCASTS);
 		_radio->stopListening();
 		_radio->write(&broadcast, sizeof(broadcast));
 		_radio->startListening();
+		
+		printf("BroadcastTime: %d\n\r", broadcastTime);
+		printf("Counter: %d\n\r", counter);
 	}
 	
 	broadcastDone = true;
-	printf("Broadcast #%d sent\n\r", broadcastsSend);
-	printf("BroadcastsSend == BROADCAST => %d == %d \n\r\n", broadcastsSend, BROADCASTS);
 	
 	if (broadcastsSend == BROADCASTS) {
 		setState(QUIET);
-		broadcastsSend = 0;
-		broadcastDone = false;
 	}
 }
 
 void SynchronisedNode::handleBroadcast(Broadcast *msg) {
-	printf("Broadcast Received: \n\rmsg->getNodeID(): %d\n\r msg->getBroadcastTime(): %u \n\r msg->isLastBroadcast(): %d", msg->getNodeID(), msg->getBroadcastTime(), msg->isLastBroadcast());
+	printf("Broadcast Received at %d \n\rmsg->getNodeID(): %d\n\rmsg->getBroadcastTime(): %lu \n\rmsg->isLastBroadcast(): %d \n\r\n", counter, msg->getNodeID(), msg->getBroadcastTime(), msg->isLastBroadcast());
 	
-	if (_state == BROADCASTING) {
-		if (msg->getNodeID() < _nodeID) {
-			setState(LISTENING);		}
-	} else if (_state == QUIET) {
-		counter += 0.1 * (counter - msg->getBroadcastTime());
-		
-		if (msg->getNodeID() < _nodeID) {
-			setState(LISTENING);
-		}
-	} else if (_state == LISTENING) {
-		counter += 0.1 * (counter - msg->getBroadcastTime());
-		
-		if ((msg->getNodeID() == (_nodeID - 1)%16 && msg->isLastBroadcast()) || msg->getNodeID() > _nodeID) {
-			setState(BROADCASTING);
-		}
+	raiseCounter(0.4 * (msg->getBroadcastTime() - counter));
+	
+	if ((_state == BROADCASTING || _state == QUIET) && msg->getNodeID() < _nodeID) {
+		setState(LISTENING);
+	} else if (_state == LISTENING && (msg->getNodeID() > _nodeID || (msg->getNodeID() == (_nodeID - 1)%16 && msg->isLastBroadcast()))) {
+		setState(BROADCASTING);
 	}
 }

@@ -45,9 +45,9 @@
 
 typedef enum {BROADCASTING = 0, QUIET, LISTENING} state;
 
-const int FREQUENCY		=	1000;
-const int BROADCASTS	=	5;
-const int TIMEOUTTIME	=	10 * FREQUENCY;
+const int	FREQUENCY	=	1000;
+const int	BROADCASTS	=	5;
+const int	TIMEOUTTIME	=	10 * FREQUENCY;
 
 class SynchronisedNode {
 private:

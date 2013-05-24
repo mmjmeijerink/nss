@@ -52,6 +52,7 @@ void check() {
 	// BROADCAST
 	if (node->getState() == BROADCASTING && !node->getBroadcastDone() && node->getCounter() >= node->getBroadcastTime()) {
 		node->sendBroadcast();
+		lastBroadcastReceived = millis();
 	}
 	
 	if (node->getRadio()->available()) {
@@ -74,7 +75,7 @@ void check() {
 	// LEDSTATUS
 	node->checkLedStatus();
 }
-
+/*
 void check(interval interval) {
 	adjustCounter();
 	
@@ -113,6 +114,7 @@ void check(interval interval) {
 			break;
 	}
 }
+*/
 
 void printDebugInfo() {
 	printf("NodeID: %d \n\r", node->getNodeID());
@@ -120,7 +122,7 @@ void printDebugInfo() {
 	printf("State: %d \n\r\n", node->getState());
 	
 	printf("BroadcastTime: %u \n\r", node->getBroadcastTime());
-	printf("millis() - lastBroadcastReceived >= node->getTimeoutTime() == %u - %u >= %u  \n\r\n", millis(), lastBroadcastReceived, node->getTimeoutTime());
+	printf("millis() - lastBroadcastReceived >= node->getTimeoutTime() == %lu - %lu >= %lu  \n\r\n", millis(), lastBroadcastReceived, node->getTimeoutTime());
 }
 
 
@@ -167,5 +169,5 @@ void setup(void) {
 
 void loop(void) {
 	check();
-	if (node->getCounter() % 500 == 0) printDebugInfo();
+	//if (node->getCounter() % 1000 == 0) printDebugInfo();
 }
