@@ -39,14 +39,14 @@ unsigned long	lastBroadcastReceived = 0;
 /// Userdefined functions
 ///
 
-void adjustCounter() {
+void adjustCounter(void) {
 	// Raise the counter with the time that has past since last raise
 	unsigned long currentTime = millis();
 	node->raiseCounter(currentTime - lastTime);
 	lastTime = currentTime;
 }
 
-void check() {
+void check(void) {
 	adjustCounter();
 	
 	// BROADCAST
@@ -115,9 +115,10 @@ void check(interval interval) {
 }
 
 void printDebugInfo() {
+	printf("NodeID: %d \n\r", node->getNodeID());
 	printf("Counter value: %d \n\r", node->getCounter());
 	printf("State: %d \n\r", node->getState());
-	printf("Last broadcast received/sent: %u \n\r\n", lastBroadcastReceived);
+	printf("Last broadcast received: %u \n\r\n", lastBroadcastReceived);
 }
 
 
@@ -140,7 +141,7 @@ void setup(void) {
 	pinMode(7, OUTPUT);
 	digitalWrite(7, HIGH);
 	
-	int ID = digitalRead(4)*8 + digitalRead(5)*4 + digitalRead(6)*2 + digitalRead(7)*1;
+	int ID = !digitalRead(4)*8 + !digitalRead(5)*4 + !digitalRead(6)*2 + !digitalRead(7)*1;
 	node = new SynchronisedNode(ID, &radio, LEDPIN);
 	
 	// Prepare the radio

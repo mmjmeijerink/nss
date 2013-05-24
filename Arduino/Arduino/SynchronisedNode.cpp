@@ -142,7 +142,7 @@ void SynchronisedNode::handleBroadcast(Broadcast *msg) {
 	} else if (_state == LISTENING) {
 		counter += 0.1 * (counter - msg->getBroadcastTime());
 		
-		if (msg->getNodeID() == _nodeID - 1 && msg->isLastBroadcast()) || msg->getNodeID() > _nodeID) {
+		if ((msg->getNodeID() == _nodeID - 1 && msg->isLastBroadcast()) || msg->getNodeID() > _nodeID) {
 			setState(BROADCASTING);
 		}
 	}
