@@ -19,8 +19,8 @@
 
 #include "SynchronisedNode.h"
 
-SynchronisedNode::SynchronisedNode(int NodeID, RF24 *radio, uint8_t ledPin) {
-    _nodeID = NodeID;
+SynchronisedNode::SynchronisedNode(int NodeId, RF24 *radio, uint8_t ledPin) {
+    _nodeId = NodeId;
 	_state = BROADCASTING;
 	counter = 0;
 	broadcastTime = random(FREQUENCY);
@@ -37,8 +37,8 @@ SynchronisedNode::SynchronisedNode(int NodeID, RF24 *radio, uint8_t ledPin) {
 }
 
 // Getters & Setters
-int SynchronisedNode::getNodeID() {
-	return _nodeID;
+int SynchronisedNode::getNodeId() {
+	return _nodeId;
 }
 
 state SynchronisedNode::getState() {
@@ -112,13 +112,14 @@ void SynchronisedNode::checkLedStatus() {
 void SynchronisedNode::sendBroadcast() {
 	if (_state == BROADCASTING && !broadcastDone && counter >= broadcastTime) {
 		broadcastsSend++;
-		Broadcast broadcast(_nodeID, counter, broadcastsSend == BROADCASTS);
+		Broadcast broadcast(_nodeId, counter, broadcastsSend == BROADCASTS);
 		_radio->stopListening();
 		_radio->write(&broadcast, sizeof(broadcast));
 		_radio->startListening();
 		
 		printf("BroadcastTime: %d\n\r", broadcastTime);
 		printf("Counter: %d\n\r", counter);
+		printf("NodeId: %d \n\r", _nodeId);
 	}
 	
 	broadcastDone = true;
@@ -129,13 +130,13 @@ void SynchronisedNode::sendBroadcast() {
 }
 
 void SynchronisedNode::handleBroadcast(Broadcast *msg) {
-	printf("Broadcast Received at %d \n\rmsg->getNodeID(): %d\n\rmsg->getBroadcastTime(): %d \n\rmsg->isLastBroadcast(): %d \n\r\n", counter, msg->getNodeID(), msg->getBroadcastTime(), msg->isLastBroadcast());
+	printf("Broadcast Received at %d \n\rmsg->getNodeId(): %d\n\rmsg->getBroadcastTime(): %d \n\rmsg->isLastBroadcast(): %d \n\r\n", counter, msg->getNodeId(), msg->getBroadcastTime(), msg->isLastBroadcast());
 	
 	raiseCounter(0.4 * (msg->getBroadcastTime() - counter));
 	
-	if ((_state == BROADCASTING || _state == QUIET) && msg->getNodeID() < _nodeID) {
+	if ((_state == BROADCASTING || _state == QUIET) && msg->getNodeId() < _nodeId) {
 		setState(LISTENING);
-	} else if (_state == LISTENING && (msg->getNodeID() > _nodeID || (msg->getNodeID() == (_nodeID - 1)%16 && msg->isLastBroadcast()))) {
+	} else if (_state == LISTENING && (msg->getNodeId() > _nodeId || (msg->getNodeId() == (_nodeId - 1)%16 && msg->isLastBroadcast()))) {
 		setState(BROADCASTING);
 	}
 }

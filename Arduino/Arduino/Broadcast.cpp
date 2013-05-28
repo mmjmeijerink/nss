@@ -19,18 +19,37 @@
 
 #include "Broadcast.h"
 
-Broadcast::Broadcast(int nodeID, int broadcastTime, bool isLastBroadcast) {
-	_nodeID = nodeID;
+Broadcast::Broadcast(int nodeId, int broadcastTime, type broadcastType) {
+	_nodeId = nodeId;
 	_broadcastTime = broadcastTime;
+	_broadcastType = broadcastType;
+	_isLastBroadcast = false;
+}
+
+Broadcast::Broadcast(int nodeId, int broadcastTime, type broadcastType, bool isLastBroadcast) {
+	_nodeId = nodeId;
+	_broadcastTime = broadcastTime;
+	_broadcastType = broadcastType;
 	_isLastBroadcast = isLastBroadcast;
 }
 
-int Broadcast::getNodeID() {
-	return _nodeID;
+Broadcast::Broadcast(int nodeId, int broadcastTime, bool isLastBroadcast) {
+	_nodeId = nodeId;
+	_broadcastTime = broadcastTime;
+	_broadcastType = SYNCHRONISE;
+	_isLastBroadcast = isLastBroadcast;
+}
+
+int Broadcast::getNodeId() {
+	return _nodeId;
 }
 
 int Broadcast::getBroadcastTime() {
 	return _broadcastTime;
+}
+
+type Broadcast::getBroadcastType() {
+	return _broadcastType;
 }
 
 bool Broadcast::isLastBroadcast() {

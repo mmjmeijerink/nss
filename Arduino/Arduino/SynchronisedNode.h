@@ -51,7 +51,7 @@ const int	TIMEOUTTIME	=	10 * FREQUENCY;
 
 class SynchronisedNode {
 private:
-	int		_nodeID;
+	int		_nodeId;
 	state	_state;
 	int		counter;
 	int		broadcastTime;
@@ -67,14 +67,14 @@ private:
 	int		ledTurnedOn;
 	
 public:
-	SynchronisedNode(int ID, RF24 *radio, uint8_t ledPin);
+	SynchronisedNode(int Id, RF24 *radio, uint8_t ledPin);
 	
 	// Getters & Setters
-	int		getNodeID(void);
+	int		getNodeId(void);
 	state	getState(void);
 	void	setState(state);
 	int		getCounter(void);
-	void	raiseCounter(unsigned long value);
+	void	raiseCounter(int value);
 	int		getFrequency(void);
 	int		getTimeoutTime(void);
 	int		getBroadcastTime(void);

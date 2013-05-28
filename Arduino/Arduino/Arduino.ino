@@ -3,6 +3,7 @@
 #include "nRF24L01.h"
 #include "RF24.h"
 #include "SynchronisedNode.h"
+//#include "LocalizedNode.h"
 #include "Broadcast.h"
 
 #define LEDPIN	2
@@ -61,8 +62,16 @@ void check() {
 		while (!done) {
 			done = node->getRadio()->read(broadcastMessage, sizeof(Broadcast));
 		}
+		
 		node->handleBroadcast(broadcastMessage);
 		lastBroadcastReceived = millis();
+		
+		/*if (broadcastMessage.getBroadcastType() == Broadcast.SYNCHRONISE) {
+			node->handleBroadcast(broadcastMessage);
+			lastBroadcastReceived = millis();
+		} else if (broadcastMessage.getBroadcastType() == Broadcast.POSITION) {
+			// localizedNode.handleBroadcast(broadcastMessage)?
+		}*/
 	}
 	
 	// TIMEOUT
@@ -75,49 +84,9 @@ void check() {
 	// LEDSTATUS
 	node->checkLedStatus();
 }
-/*
-void check(interval interval) {
-	adjustCounter();
-	
-	switch (interval) {
-		case ALL:
-			check();
-			break;
-		case BROADCAST:
-			if (node->getState() == BROADCASTING && !node->getBroadcastDone() && node->getCounter() >= node->getBroadcastTime()) {
-				node->sendBroadcast();
-			}
-			
-			if (node->getRadio()->available()) {
-				Broadcast *broadcastMessage = 0;
-				bool done = false;
-				while (!done) {
-					done = node->getRadio()->read(broadcastMessage, sizeof(Broadcast));
-				}
-				node->handleBroadcast(broadcastMessage);
-				lastBroadcastReceived = millis();
-			}
-			break;
-		case TIMEOUT:
-			if (node->getState() == LISTENING && millis() - lastBroadcastReceived >= node->getTimeoutTime()) {
-				node->setState(BROADCASTING);
-			} else if (node->getState() == QUIET && millis() - lastBroadcastReceived >= 2 * node->getTimeoutTime()) {
-				node->setState(BROADCASTING);
-			}
-			break;
-		case LEDSTATUS:
-			node->checkLedStatus();
-			break;
-		
-		default:
-			check();
-			break;
-	}
-}
-*/
 
 void printDebugInfo() {
-	printf("NodeID: %d \n\r", node->getNodeID());
+	printf("NodeId: %d \n\r", node->getNodeId());
 	printf("Counter value: %d \n\r", node->getCounter());
 	printf("State: %d \n\r\n", node->getState());
 	
@@ -135,7 +104,7 @@ void setup(void) {
 	pinMode(LEDPIN, OUTPUT);
 	digitalWrite(LEDPIN, LOW);
 	
-	// Setup NodeID
+	// Setup NodeId
 	pinMode(4, OUTPUT);
 	digitalWrite(4, HIGH);
 	pinMode(5, OUTPUT);
@@ -145,8 +114,8 @@ void setup(void) {
 	pinMode(7, OUTPUT);
 	digitalWrite(7, HIGH);
 	
-	int ID = !digitalRead(4) * 8 + !digitalRead(5) * 4 + !digitalRead(6) * 2 + !digitalRead(7);
-	node = new SynchronisedNode(ID, &radio, LEDPIN);
+	int Id = !digitalRead(4) * 8 + !digitalRead(5) * 4 + !digitalRead(6) * 2 + !digitalRead(7);
+	node = new SynchronisedNode(Id, &radio, LEDPIN);
 	
 	// Prepare the radio
 	node->getRadio()->begin();

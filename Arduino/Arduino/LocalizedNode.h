@@ -40,12 +40,27 @@
 #ifndef LocalizedNode_h
 #define LocalizedNode_h
 
+#include "SynchronisedNode.h"
+#include "Broadcast.h"
+
+/*
+ * Designkeuze broadcast voor geluidsignalen: 
+ * - Nieuwe radio instantie? (mogelijk?)
+ * - Synchronised node radio -> 2e pipe openen
+ * - Broadcast aanpassen zodat en laten aangeven wat voor soort message die broadcast is
+ *
+ * Geluidsnelheid bij kamertemperatuur (20 celcius): 343 m/s
+ * 1 meter precisie -> indien 3ms precisie bij synchronisatie
+ * 
+ * Accelerometer
+ */
 class LocalizedNode {
 private:
-	
+	SynchronisedNode	*_node;
 	
 public:
-	LocalizedNode();
+	LocalizedNode(SynchronisedNode *node); //(microfoon en speaker) en (accelerometer en gyroscope)
+	
 };
 
 #endif

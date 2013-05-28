@@ -19,6 +19,6 @@
 
 #include "LocalizedNode.h"
 
-LocalizedNode::LocalizedNode() {
-	
+LocalizedNode::LocalizedNode(SynchronisedNode *node) {
+	_node = node;
 }

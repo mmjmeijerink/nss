@@ -40,16 +40,22 @@
 #ifndef Broadcast_h
 #define Broadcast_h
 
+typedef enum {SYNCHRONISE = 0, POSITION} type;
+
 class Broadcast {
 private:
-	int		_nodeID;
+	int		_nodeId;
 	int		_broadcastTime;
+	type	_broadcastType;
 	bool	_isLastBroadcast;
 	
 public:
-	Broadcast(int nodeID, int broadcastTime, bool isLastBroadcast);
-	int		getNodeID(void);
+	Broadcast(int nodeId, int broadcastTime, type broadcastType);
+	Broadcast(int nodeId, int broadcastTime, type broadcastType, bool isLastBroadcast);
+	Broadcast(int nodeId, int broadcastTime, bool isLastBroadcast);
+	int		getNodeId(void);
 	int		getBroadcastTime(void);
+	type	getBroadcastType(void);
 	bool	isLastBroadcast(void);
 };
 
