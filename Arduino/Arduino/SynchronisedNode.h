@@ -40,55 +40,60 @@
 #ifndef SynchronisedNode_h
 #define SynchronisedNode_h
 
-#include "Broadcast.h"
 #include "RF24.h"
 
 typedef enum {BROADCASTING = 0, QUIET, LISTENING} state;
 
-const int	FREQUENCY	=	1000;
-const int	BROADCASTS	=	5;
-const int	TIMEOUTTIME	=	10 * FREQUENCY;
+typedef struct {
+	int		nodeId;
+	int		broadcastTime;
+	bool	isLastBroadcast;
+} Broadcast;
+
+const unsigned long	FREQUENCY	=	2000;
+const int			BROADCASTS	=	5;
+const int			TIMEOUTTIME	=	5 * FREQUENCY;
 
 class SynchronisedNode {
 private:
-	int		_nodeId;
-	state	_state;
-	int		counter;
-	int		broadcastTime;
-	int		broadcastsSend;
-	bool	broadcastDone;
+	int				_nodeId;
+	state			_state;
+	int				counter;
+	int				broadcastTime;
+	int				broadcastsSend;
+	bool			broadcastDone;
 	
 	// Radio variables
 	RF24*	_radio;
 	
 	// LED variables
-	uint8_t	_ledPin;
-	int		blinkTime;
-	int		ledTurnedOn;
+	uint8_t			_ledPin;
+	int				blinkTime;
+	unsigned long	ledTurnedOn;
 	
 public:
 	SynchronisedNode(int Id, RF24 *radio, uint8_t ledPin);
 	
 	// Getters & Setters
-	int		getNodeId(void);
-	state	getState(void);
-	void	setState(state);
-	int		getCounter(void);
-	void	raiseCounter(int value);
-	int		getFrequency(void);
-	int		getTimeoutTime(void);
-	int		getBroadcastTime(void);
-	int		getBroadcastsSend(void);
-	bool	getBroadcastDone(void);
-	RF24*	getRadio(void);
+	int				getNodeId(void);
+	state			getState(void);
+	void			setState(state);
+	int				getCounter(void);
+	void			raiseCounter(int value);
+	int				getFrequency(void);
+	int				getTimeoutTime(void);
+	int				getBroadcastTime(void);
+	int				getBroadcastsSend(void);
+	bool			getBroadcastDone(void);
+	RF24*			getRadio(void);
 	
 	// LED functions
-	void	blinkLed(void);
-	void	checkLedStatus(void);
+	void			blinkLed(void);
+	void			checkLedStatus(void);
 	
 	// Broadcast functions
-	void	sendBroadcast(void);
-	void	handleBroadcast(Broadcast *msg);
+	void			sendBroadcast(void);
+	void			handleBroadcast(Broadcast msg);
 };
 
 #endif

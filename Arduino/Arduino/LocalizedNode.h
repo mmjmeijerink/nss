@@ -41,7 +41,6 @@
 #define LocalizedNode_h
 
 #include "SynchronisedNode.h"
-#include "Broadcast.h"
 
 /*
  * Designkeuze broadcast voor geluidsignalen: 

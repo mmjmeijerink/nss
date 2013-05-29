@@ -4,7 +4,6 @@
 #include "RF24.h"
 #include "SynchronisedNode.h"
 //#include "LocalizedNode.h"
-#include "Broadcast.h"
 
 #define LEDPIN	2
 
@@ -57,10 +56,10 @@ void check() {
 	}
 	
 	if (node->getRadio()->available()) {
-		Broadcast *broadcastMessage = 0;
+		Broadcast broadcastMessage;
 		bool done = false;
 		while (!done) {
-			done = node->getRadio()->read(broadcastMessage, sizeof(Broadcast));
+			done = node->getRadio()->read(&broadcastMessage, sizeof(Broadcast));
 		}
 		
 		node->handleBroadcast(broadcastMessage);
@@ -86,12 +85,11 @@ void check() {
 }
 
 void printDebugInfo() {
-	printf("NodeId: %d \n\r", node->getNodeId());
+	printf("\n\n\rNodeId: %d \n\r", node->getNodeId());
 	printf("Counter value: %d \n\r", node->getCounter());
 	printf("State: %d \n\r\n", node->getState());
 	
 	printf("BroadcastTime: %u \n\r", node->getBroadcastTime());
-	printf("millis() - lastBroadcastReceived >= node->getTimeoutTime() == %lu - %lu >= %lu  \n\r\n", millis(), lastBroadcastReceived, node->getTimeoutTime());
 }
 
 
@@ -114,7 +112,7 @@ void setup(void) {
 	pinMode(7, OUTPUT);
 	digitalWrite(7, HIGH);
 	
-	int Id = !digitalRead(4) * 8 + !digitalRead(5) * 4 + !digitalRead(6) * 2 + !digitalRead(7);
+	byte Id = !digitalRead(4) * 8 + !digitalRead(5) * 4 + !digitalRead(6) * 2 + !digitalRead(7);
 	node = new SynchronisedNode(Id, &radio, LEDPIN);
 	
 	// Prepare the radio
