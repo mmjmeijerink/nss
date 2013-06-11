@@ -2,94 +2,54 @@
 #include "printf.h"
 #include "nRF24L01.h"
 #include "RF24.h"
-#include "SynchronisedNode.h"
-//#include "LocalizedNode.h"
 
-#define LEDPIN	2
+#define BUZPIN	2
 
 ///
-/// Instantiations
+/// Constants
 ///
 
-RF24				radio(3, 9); // Pin 3, 9, 11, 12, 13 worden door de radio gebruikt
-SynchronisedNode	*node = 0;
+const unsigned long	FREQUENCY = 500;
 
 
 ///
 /// Variables
 ///
 
-// enums
-typedef enum {
-	ALL = 0,
-	BROADCAST,
-	TIMEOUT,
-	LEDSTATUS
-} interval;
-
-// Broadcast address
-const uint64_t broadcastPipe = 0xABCD4567EFLL;
-
-// Interval variables
+int				counter;
 unsigned long	lastTime = 0;
-unsigned long	lastBroadcastReceived = 0;
+unsigned long	buzTime = 50;
+unsigned long	buzzerTurnedOn = 0;
 
 
 ///
 /// Userdefined functions
 ///
 
+// Buzzer functions
+void buzBuzzer() {
+	digitalWrite(BUZPIN, HIGH);
+	buzzerTurnedOn = millis();
+}
+
+void checkBuzzerStatus() {
+	if (millis() - buzzerTurnedOn >= buzTime) {
+		tone(BUZPIN, 19, 1000);
+	}
+}
+
 void adjustCounter() {
 	// Raise the counter with the time that has past since last raise
 	unsigned long currentTime = millis();
-	node->raiseCounter(currentTime - lastTime);
+	int oldCounter = counter;
+	counter += currentTime - lastTime;
+	counter = counter % FREQUENCY;
+	
+	if (counter < oldCounter) {
+		buzBuzzer();
+	}
+	
 	lastTime = currentTime;
-}
-
-void check() {
-	adjustCounter();
-	
-	// BROADCAST
-	if (node->getState() == BROADCASTING && !node->getBroadcastDone() && node->getCounter() >= node->getBroadcastTime()) {
-		node->sendBroadcast();
-		lastBroadcastReceived = millis();
-	}
-	
-	if (node->getRadio()->available()) {
-		Broadcast broadcastMessage;
-		bool done = false;
-		while (!done) {
-			done = node->getRadio()->read(&broadcastMessage, sizeof(Broadcast));
-		}
-		
-		node->handleBroadcast(broadcastMessage);
-		lastBroadcastReceived = millis();
-		
-		/*if (broadcastMessage.getBroadcastType() == Broadcast.SYNCHRONISE) {
-			node->handleBroadcast(broadcastMessage);
-			lastBroadcastReceived = millis();
-		} else if (broadcastMessage.getBroadcastType() == Broadcast.POSITION) {
-			// localizedNode.handleBroadcast(broadcastMessage)?
-		}*/
-	}
-	
-	// TIMEOUT
-	if (node->getState() == LISTENING && millis() - lastBroadcastReceived >= node->getTimeoutTime()) {
-		node->setState(BROADCASTING);
-	} else if (node->getState() == QUIET && millis() - lastBroadcastReceived >= 2 * node->getTimeoutTime()) {
-		node->setState(BROADCASTING);
-	}
-	
-	// LEDSTATUS
-	node->checkLedStatus();
-}
-
-void printDebugInfo() {
-	printf("\n\n\rNodeId: %d \n\r", node->getNodeId());
-	printf("Counter value: %d \n\r", node->getCounter());
-	printf("State: %d \n\r\n", node->getState());
-	
-	printf("BroadcastTime: %u \n\r", node->getBroadcastTime());
 }
 
 
@@ -98,11 +58,11 @@ void printDebugInfo() {
 ///
 
 void setup(void) {
-	Serial.begin(57600);
-	pinMode(LEDPIN, OUTPUT);
-	digitalWrite(LEDPIN, LOW);
+	//Serial.begin(57600);
+	pinMode(BUZPIN, OUTPUT);
+	digitalWrite(BUZPIN, LOW);
 	
-	// Setup NodeId
+	/*/ Setup NodeId
 	pinMode(4, OUTPUT);
 	digitalWrite(4, HIGH);
 	pinMode(5, OUTPUT);
@@ -129,12 +89,12 @@ void setup(void) {
 	
 	printf_begin();
 	node->getRadio()->printDetails();
-	printDebugInfo();
+	*/
 	
 	adjustCounter();
 }
 
 void loop(void) {
-	check();
-	//if (node->getCounter() % 1000 == 0) printDebugInfo();
+	adjustCounter();
+	checkBuzzerStatus();
 }
