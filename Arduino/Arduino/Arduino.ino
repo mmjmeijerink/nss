@@ -3,53 +3,81 @@
 #include "nRF24L01.h"
 #include "RF24.h"
 
-#define BUZPIN	2
+RF24	radio(3, 9); // Pin 3, 9, 11, 12, 13 worden door de radio gebruikt
 
 ///
 /// Constants
 ///
 
-const unsigned long	FREQUENCY = 500;
+typedef enum {POSSIGNAL = 0} type;
 
+typedef struct {
+	type	msgType;
+} Broadcast;
+
+// Grid node states
+typedef enum {WAITING = 0, RADIORCV} state;
 
 ///
 /// Variables
 ///
 
-int				counter;
-unsigned long	lastTime = 0;
-unsigned long	buzTime = 50;
-unsigned long	buzzerTurnedOn = 0;
+bool isGridNode = true;
+
+// Moving node vars
+int buzPin = 8;
+
+// Grid node vars
+state _state = WAITING;
+
+int micPort = A0;
+int average;
+
+unsigned long radioRcvTime;
+unsigned long soundRcvTime;
+
+// Broadcast address
+const uint64_t broadcastPipe = 0xABCD4567EFLL;
 
 
 ///
 /// Userdefined functions
 ///
 
-// Buzzer functions
-void buzBuzzer() {
-	digitalWrite(BUZPIN, HIGH);
-	buzzerTurnedOn = millis();
+// Moving node methods
+void sendLocSig() {
+	// Radio Broadcast - Received by all grid-nodes at the same time
+	Broadcast broadcast;
+	broadcast.msgType = POSSIGNAL;
+	radio.write(&broadcast, sizeof(broadcast));
+	
+	// Buzzer Signal - Received with a delay, delay between Radio and Buzzer -> Distance
+	tone(buzPin, 2750, 20);
+	delay(50);
+	tone(buzPin, 2750, 20);
+	delay(20);
+	tone(buzPin, 2750, 20);
+	delay(50);
+	tone(buzPin, 2750, 20);
 }
 
-void checkBuzzerStatus() {
-	if (millis() - buzzerTurnedOn >= buzTime) {
-		tone(BUZPIN, 19, 1000);
-	}
-}
-
-void adjustCounter() {
-	// Raise the counter with the time that has past since last raise
-	unsigned long currentTime = millis();
-	int oldCounter = counter;
-	counter += currentTime - lastTime;
-	counter = counter % FREQUENCY;
+// Grid node methods
+void checkSound() {
+	unsigned long time = micros();
+	int sound = analogRead(micPort);
+	//Serial.println(map(sound - average, -128, 128, 0, 1024));
 	
-	if (counter < oldCounter) {
-		buzBuzzer();
+	if (sound - average < -17 || sound - average > 17) {
+		soundRcvTime = time;
+		printf("TravelTime = %lu  \n\r", radioRcvTime - soundRcvTime);
+		digitalWrite(buzPin, HIGH);
+		delay(30);
+		digitalWrite(buzPin, LOW);
 	}
 	
-	lastTime = currentTime;
+	average = 0.95 * average + 0.05 * sound;
+	delayMicroseconds(100);
+	_state = WAITING;
 }
 
 
@@ -58,43 +86,68 @@ void adjustCounter() {
 ///
 
 void setup(void) {
-	//Serial.begin(57600);
-	pinMode(BUZPIN, OUTPUT);
-	digitalWrite(BUZPIN, LOW);
+	Serial.begin(19200);
+	pinMode(buzPin, OUTPUT);
 	
-	/*/ Setup NodeId
-	pinMode(4, OUTPUT);
-	digitalWrite(4, HIGH);
-	pinMode(5, OUTPUT);
-	digitalWrite(5, HIGH);
-	pinMode(6, OUTPUT);
-	digitalWrite(6, HIGH);
-	pinMode(7, OUTPUT);
-	digitalWrite(7, HIGH);
-	
-	byte Id = !digitalRead(4) * 8 + !digitalRead(5) * 4 + !digitalRead(6) * 2 + !digitalRead(7);
-	node = new SynchronisedNode(Id, &radio, LEDPIN);
+	// TODO: check Moving vs Grid node
+	// Mogelijke implementatie met D2 verbonden met GND
+	pinMode(2, INPUT);
+	digitalWrite(2, HIGH);
+	if (digitalRead(2)) {
+		isGridNode = false;
+	}
 	
 	// Prepare the radio
-	node->getRadio()->begin();
-	node->getRadio()->setChannel(107);
-	node->getRadio()->setPALevel(RF24_PA_MAX);
-	//node->getRadio()->setDataRate(RF24_2MBPS);
-	node->getRadio()->setRetries(5,0);
-	node->getRadio()->setPayloadSize(8);
+	radio.begin();
+	radio.setChannel(107);
+	radio.setPALevel(RF24_PA_MAX);
+	//radio.setDataRate(RF24_2MBPS);
+	radio.setRetries(5,0);
+	radio.setPayloadSize(8);
+	//radio.setAutoAck(false);
 	
-	node->getRadio()->openWritingPipe(broadcastPipe);
-	node->getRadio()->openReadingPipe(1, broadcastPipe);
-	node->getRadio()->startListening();
+	if (!isGridNode) {
+		radio.openWritingPipe(broadcastPipe);
+	} else {
+		radio.openReadingPipe(1, broadcastPipe);
+		radio.startListening();
+	}
+	
+	if (isGridNode) {
+		for (int i = 0; i < 100; i++) {
+			int sound = analogRead(micPort);
+			average = 0.95 * average + 0.05 * sound;
+			delayMicroseconds(100);
+		}
+	}
 	
 	printf_begin();
-	node->getRadio()->printDetails();
-	*/
-	
-	adjustCounter();
+	radio.printDetails();
 }
 
 void loop(void) {
-	adjustCounter();
-	checkBuzzerStatus();
+	if (!isGridNode) {
+		sendLocSig();
+	} else {
+		if (radio.available()) {
+			printf("Radio event processed \n\r");
+			unsigned long time = micros();
+			
+			Broadcast msg;
+			bool done = false;
+			while (!done) {
+				done = radio.read(&msg, sizeof(Broadcast));
+			}
+			if (msg.msgType == POSSIGNAL) {
+				radioRcvTime = time;
+				_state = RADIORCV;
+			}
+		}
+		
+		if (_state == RADIORCV && micros() - radioRcvTime > 750) {
+			checkSound();
+		}
+	}
+	
+	delay(1000);
 }
