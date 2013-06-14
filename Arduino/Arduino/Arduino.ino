@@ -25,7 +25,7 @@ typedef enum {WAITING = 0, RADIORCV} state;
 bool isGridNode = true;
 
 // Moving node vars
-int buzPin = 8;
+int buzPin = 7;
 
 // Grid node vars
 state _state = WAITING;
@@ -49,7 +49,9 @@ void sendLocSig() {
 	// Radio Broadcast - Received by all grid-nodes at the same time
 	Broadcast broadcast;
 	broadcast.msgType = POSSIGNAL;
+	radio.stopListening();
 	radio.write(&broadcast, sizeof(broadcast));
+	radio.startListening();
 	
 	// Buzzer Signal - Received with a delay, delay between Radio and Buzzer -> Distance
 	tone(buzPin, 2750, 20);
@@ -93,7 +95,7 @@ void setup(void) {
 	// Mogelijke implementatie met D2 verbonden met GND
 	pinMode(2, INPUT);
 	digitalWrite(2, HIGH);
-	if (digitalRead(2)) {
+	if (!digitalRead(2)) {
 		isGridNode = false;
 	}
 	
@@ -128,6 +130,7 @@ void setup(void) {
 void loop(void) {
 	if (!isGridNode) {
 		sendLocSig();
+		delay(2000);
 	} else {
 		if (radio.available()) {
 			printf("Radio event processed \n\r");
@@ -138,16 +141,15 @@ void loop(void) {
 			while (!done) {
 				done = radio.read(&msg, sizeof(Broadcast));
 			}
+			
 			if (msg.msgType == POSSIGNAL) {
 				radioRcvTime = time;
 				_state = RADIORCV;
 			}
 		}
 		
-		if (_state == RADIORCV && micros() - radioRcvTime > 750) {
+		if (_state == RADIORCV && micros() - radioRcvTime < 1750000) {
 			checkSound();
 		}
 	}
-	
-	delay(1000);
 }
