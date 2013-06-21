@@ -23,7 +23,7 @@
 //
 
 // Sketch
-#include "BuzNode.ino"
+#include "GridNode.ino"
 
 // Core library and main()
 #if defined(MPIDE)

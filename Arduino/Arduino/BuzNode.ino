@@ -3,28 +3,26 @@
 #include "nRF24L01.h"
 #include "RF24.h"
 
+#define GRIDNODES	9
+#define AVGOVER	10
+
 RF24	radio(3, 9); // Pin 3, 9, 11, 12, 13 worden door de radio gebruikt
 
 ///
 /// Constants
 ///
 
-typedef enum {POSITION = 0, DISTANCE} type;
+typedef struct {
+	unsigned short	counter;
+	unsigned int	nodeId;
+	unsigned int	distance;
+} Message;
 
 typedef struct {
-	type	msgType;
-	int		nodeId;
-	int		distance;
-} Broadcast;
-
-typedef struct {
-	int		nodeId;
-	int		currentDistance;
-	int		lastDistance;
+	int				nodeId;
+	int				currentDistance;
+	int				lastDistance;
 } GridNode;
-
-// Grid node states
-typedef enum {WAITING = 0, RADIORCV, CONFIRM} state;
 
 ///
 /// Variables
@@ -33,21 +31,16 @@ typedef enum {WAITING = 0, RADIORCV, CONFIRM} state;
 bool isGridNode = true;
 
 // Moving node vars
-int buzPin = 7;
-GridNode *gridNodes[15];
+int				buzPin = 10;
+unsigned short	messageCounter = 0;
 
-// Grid node vars
-int nodeId;
-state _state = WAITING;
+GridNode*		gridNodes[GRIDNODES];
+int				gridNodesInArray = 0;
 
-int micPort = A0;
-int average;
+Message*		distances[AVGOVER][GRIDNODES];
 
-unsigned long radioRcvTime;
-unsigned long soundRcvTime;
-
-// Broadcast address
-const uint64_t broadcastPipe = 0xABCD4567EFLL;
+// Pipes
+const uint64_t pipes[2] = {0xABCD4567EFLL, 0xFE7654DCBALL};
 
 
 ///
@@ -57,8 +50,9 @@ const uint64_t broadcastPipe = 0xABCD4567EFLL;
 // Moving node methods
 void sendLocSig() {
 	// Radio Broadcast - Received by all grid-nodes at the same time
-	Broadcast broadcast;
-	broadcast.msgType = POSITION;
+	Message broadcast;
+	broadcast.counter = messageCounter;
+	
 	radio.stopListening();
 	radio.write(&broadcast, sizeof(broadcast));
 	
@@ -67,6 +61,7 @@ void sendLocSig() {
 	delay(15);
 	tone(buzPin, 2750, 15);
 	
+	messageCounter++;
 	radio.startListening();
 }
 
@@ -74,70 +69,62 @@ GridNode* getGridNode(int nodeId) {
 	GridNode *result;
 	
 	bool found = false;
-	for (int i = 0; i < sizeof(gridNodes)/sizeof(GridNode) && !found; i++) {
+	for (int i = 0; i < gridNodesInArray && !found; i++) {
 		if (gridNodes[i]->nodeId == nodeId) {
 			result = gridNodes[i];
 			found = true;
 		}
 	}
 	
+	// GridNode not in array (not seen before), so add to array
 	if (!found) {
 		GridNode *node;
 		node->nodeId = nodeId;
 		node->currentDistance = 0;
 		node->lastDistance = 0;
 		
-		gridNodes[sizeof(gridNodes)/sizeof(GridNode)] = node;
-		result = gridNodes[sizeof(gridNodes)/sizeof(GridNode) - 1];
+		gridNodes[gridNodesInArray] = node;
+		gridNodesInArray++;
+		result = gridNodes[gridNodesInArray - 1];
 	}
 	
 	return result;
 }
 
-void distanceToNode(int nodeId, int distance, unsigned long rcvTime) {
-	GridNode *node = getGridNode(nodeId);
-	
-}
-
-// Grid node methods
-int distance(unsigned long travelTime) {
-	return (travelTime/1000000) * 343;
-}
-
-void sendDistance(unsigned long travelTime) {
-	Broadcast broadcast;
-	broadcast.msgType = DISTANCE;
-	broadcast.nodeId = nodeId;
-	broadcast.distance = distance(travelTime);
-	
-	radio.stopListening();
-	radio.write(&broadcast, sizeof(Broadcast));
-	radio.startListening();
-}
-
-void checkSound() {
-	unsigned long time = micros();
-	int sound = analogRead(micPort);
-	//Serial.println(map(sound - average, -128, 128, 0, 1024));
-	
-	if (sound - average < -20 || sound - average > 20) {
-		if (_state == CONFIRM && time - soundRcvTime > 25000 && time - soundRcvTime < 50000) {
-			sendDistance(soundRcvTime - radioRcvTime);
-			printf("TravelTime = %lu  \n\r", soundRcvTime - radioRcvTime);
-			digitalWrite(buzPin, HIGH);
-			delay(30);
-			digitalWrite(buzPin, LOW);
-			_state = WAITING;
-		} else {
-			soundRcvTime = time;
-			_state = CONFIRM;
+void newCounterReceived(Message msg) {
+	for (int i = 0; i < AVGOVER; i++) {
+		for (int j = 0; j < GRIDNODES; i++) {
+			distances[i][j] = distances[i+1][j];
 		}
 	}
 	
-	average = 0.95 * average + 0.05 * sound;
-	delayMicroseconds(100);
+	distances[AVGOVER - 1][msg.nodeId] = &msg;
 }
 
+void newDistanceReceived(Message msg) {
+	distances[AVGOVER - 1][msg.nodeId] = &msg;
+}
+
+void distanceReceived(Message msg) {
+	bool isLastCounter = false, newCounter = false;
+	for (int i = 0; i < GRIDNODES && !isLastCounter && !newCounter; i++) {
+		if (distances[AVGOVER - 1][i]->counter == msg.counter) {
+			isLastCounter = true;
+		} else if (distances[AVGOVER - 1][i]->counter < msg.counter) {
+			newCounter = true;
+		}
+	}
+	
+	if (newCounter) {
+		newCounterReceived(msg);
+	} else if (isLastCounter) {
+		newDistanceReceived(msg);
+	}
+}
+
+void calculateDistance() {
+	// distances array gebruiken om afstand tot nodes te bereken en daarmee eigen afgelegde afstand
+}
 
 ///
 /// setup() & loop()
@@ -146,12 +133,6 @@ void checkSound() {
 void setup(void) {
 	Serial.begin(19200);
 	pinMode(buzPin, OUTPUT);
-	
-	pinMode(2, INPUT);
-	digitalWrite(2, HIGH);
-	if (!digitalRead(2)) {
-		isGridNode = false;
-	}
 	
 	// Prepare the radio
 	radio.begin();
@@ -162,22 +143,9 @@ void setup(void) {
 	radio.setPayloadSize(8);
 	//radio.setAutoAck(false);
 	
-	if (!isGridNode) {
-		radio.openWritingPipe(broadcastPipe);
-	} else {
-		radio.openReadingPipe(1, broadcastPipe);
-		radio.startListening();
-	}
-	
-	if (isGridNode) {
-		//TODO: bereken/geef nodeId
-		
-		for (int i = 0; i < 100; i++) {
-			int sound = analogRead(micPort);
-			average = 0.95 * average + 0.05 * sound;
-			delayMicroseconds(100);
-		}
-	}
+	radio.openWritingPipe(pipes[0]);
+	radio.openReadingPipe(1, pipes[1]);
+	radio.startListening();
 	
 	printf_begin();
 	radio.printDetails();
@@ -185,15 +153,16 @@ void setup(void) {
 
 void loop(void) {
 	sendLocSig();
-	unsigned long rcvTime = micros();
-
+	
 	if (radio.available()) {
-		Broadcast msg;
-		radio.read(&msg, sizeof(Broadcast));
-
-		distanceToNode(msg.nodeId, msg.distance, rcvTime);
+		//unsigned long rcvTime = micros();
+		Message msg;
+		radio.read(&msg, sizeof(Message));
+		
+		distanceReceived(msg);
+		calculateDistance();
 	}
-
-	delay(2000);
+	
+	delay(500);
 }
 

@@ -3,7 +3,7 @@
 #include "nRF24L01.h"
 #include "RF24.h"
 
-#DEFINE NODEID 1
+#define NODEID 1
 
 RF24	radio(3, 9); // Pin 3, 9, 11, 12, 13 worden door de radio gebruikt
 
@@ -12,9 +12,10 @@ RF24	radio(3, 9); // Pin 3, 9, 11, 12, 13 worden door de radio gebruikt
 ///
 
 typedef struct {
-	int		nodeId;
-	int		distance;
-} Broadcast;
+	unsigned short	counter;
+	unsigned int	nodeId;
+	unsigned int	distance;
+} Message;
 
 // Grid node states
 typedef enum {WAITING = 0, RADIORCV, CONFIRM} state;
@@ -29,11 +30,12 @@ int micPort = A0;
 int average;
 state _state = WAITING;
 
-unsigned long radioRcvTime;
-unsigned long soundRcvTime;
+unsigned long	radioRcvTime;
+unsigned long	soundRcvTime;
+unsigned int	lastCounter;
 
-// Broadcast address
-const uint64_t pipes = {0xABCD4567EFLL, 0xFE7654DCBALL};
+// Pipes
+const uint64_t pipes[2] = {0xABCD4567EFLL, 0xFE7654DCBALL};
 
 
 ///
@@ -46,12 +48,13 @@ int distance(unsigned long travelTime) {
 }
 
 void sendDistance(unsigned long travelTime) {
-	Broadcast broadcast;
-	broadcast.nodeId = nodeId;
-	broadcast.distance = distance(travelTime);
+	Message msg;
+	msg.counter = lastCounter;
+	msg.nodeId = nodeId;
+	msg.distance = distance(travelTime);
 	
 	radio.stopListening();
-	radio.write(&broadcast, sizeof(Broadcast));
+	radio.write(&msg, sizeof(Message));
 	radio.startListening();
 }
 
@@ -114,9 +117,10 @@ void loop(void) {
 	if (_state == WAITING) {
 		unsigned long time = micros();
 		if (radio.available()) {
-			Broadcast msg;
-			radio.read(&msg, sizeof(Broadcast));
+			Message msg;
+			radio.read(&msg, sizeof(Message));
 			
+			lastCounter = msg.counter;
 			radioRcvTime = time;
 			_state = RADIORCV;
 		}
