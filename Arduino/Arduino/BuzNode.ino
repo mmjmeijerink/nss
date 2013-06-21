@@ -18,13 +18,13 @@ typedef struct {
 } Broadcast;
 
 typedef struct {
-	int	nodeId;
-	int	currentDistance;
-	int	lastDistance;
+	int		nodeId;
+	int		currentDistance;
+	int		lastDistance;
 } GridNode;
 
 // Grid node states
-typedef enum {WAITING = 0, RADIORCV} state;
+typedef enum {WAITING = 0, RADIORCV, CONFIRM} state;
 
 ///
 /// Variables
@@ -34,7 +34,7 @@ bool isGridNode = true;
 
 // Moving node vars
 int buzPin = 7;
-GridNode *gridNodes[];
+GridNode *gridNodes[15];
 
 // Grid node vars
 int nodeId;
@@ -63,69 +63,48 @@ void sendLocSig() {
 	radio.write(&broadcast, sizeof(broadcast));
 	
 	// Buzzer Signal - Received with a delay, delay between Radio and Buzzer -> Distance
-	tone(buzPin, 2750, 10);
-	/*delay(50);
-	tone(buzPin, 2750, 20);
-	delay(20);
-	tone(buzPin, 2750, 20);
-	delay(50);
-	tone(buzPin, 2750, 20);
-	*/
+	tone(buzPin, 2750, 15);
+	delay(15);
+	tone(buzPin, 2750, 15);
 	
 	radio.startListening();
 }
 
-void distanceToNode(msg.nodeId, msg.distance, rcvTime) {
-	GridNode node = getGridNode(msg.nodeId);
-	
-}
-
-*GridNode getGridNode(int nodeId) {
+GridNode* getGridNode(int nodeId) {
 	GridNode *result;
 	
 	bool found = false;
-	for (int i = 0; i < gridNodes.size && !found; i++) {
-		if (gridNodes[i].nodeId == nodeId) {
+	for (int i = 0; i < sizeof(gridNodes)/sizeof(GridNode) && !found; i++) {
+		if (gridNodes[i]->nodeId == nodeId) {
 			result = gridNodes[i];
 			found = true;
 		}
 	}
 	
-	if (<#condition#>) {
-		GridNode node;
-		node.nodeId = nodeId;
-		node.currentDistance = 0;
-		node.lastDistance = 0;
+	if (!found) {
+		GridNode *node;
+		node->nodeId = nodeId;
+		node->currentDistance = 0;
+		node->lastDistance = 0;
 		
-		gridNodes[gridNodes.size] = node;
-		result = gridNodes[gridNods.size - 1];
+		gridNodes[sizeof(gridNodes)/sizeof(GridNode)] = node;
+		result = gridNodes[sizeof(gridNodes)/sizeof(GridNode) - 1];
 	}
 	
 	return result;
 }
 
+void distanceToNode(int nodeId, int distance, unsigned long rcvTime) {
+	GridNode *node = getGridNode(nodeId);
+	
+}
+
 // Grid node methods
-void checkSound() {
-	unsigned long time = micros();
-	int sound = analogRead(micPort);
-	//Serial.println(map(sound - average, -128, 128, 0, 1024));
-	
-	if (sound - average < -17 || sound - average > 17) {
-		soundRcvTime = time;
-		sendDistance(soundRcvTime - radioRcvTime);
-		printf("TravelTime = %lu  \n\r", soundRcvTime - radioRcvTime);
-		digitalWrite(buzPin, HIGH);
-		delay(30);
-		digitalWrite(buzPin, LOW);
-		_state = WAITING;
-	}
-	
-	average = 0.95 * average + 0.05 * sound;
-	delayMicroseconds(100);
+int distance(unsigned long travelTime) {
+	return (travelTime/1000000) * 343;
 }
 
 void sendDistance(unsigned long travelTime) {
-	
 	Broadcast broadcast;
 	broadcast.msgType = DISTANCE;
 	broadcast.nodeId = nodeId;
@@ -136,8 +115,27 @@ void sendDistance(unsigned long travelTime) {
 	radio.startListening();
 }
 
-int distance(unsigned long travelTime) {
+void checkSound() {
+	unsigned long time = micros();
+	int sound = analogRead(micPort);
+	//Serial.println(map(sound - average, -128, 128, 0, 1024));
 	
+	if (sound - average < -20 || sound - average > 20) {
+		if (_state == CONFIRM && time - soundRcvTime > 25000 && time - soundRcvTime < 50000) {
+			sendDistance(soundRcvTime - radioRcvTime);
+			printf("TravelTime = %lu  \n\r", soundRcvTime - radioRcvTime);
+			digitalWrite(buzPin, HIGH);
+			delay(30);
+			digitalWrite(buzPin, LOW);
+			_state = WAITING;
+		} else {
+			soundRcvTime = time;
+			_state = CONFIRM;
+		}
+	}
+	
+	average = 0.95 * average + 0.05 * sound;
+	delayMicroseconds(100);
 }
 
 
@@ -186,49 +184,16 @@ void setup(void) {
 }
 
 void loop(void) {
-	if (!isGridNode) {
-		sendLocSig();
-		
-		if (radio.available()) {
-			unsigned long rcvTime = micros();
-			
-			Broadcast msg;
-			bool done = false;
-			while (!done) {
-				done = radio.read(&msg, sizeof(Broadcast));
-			}
-			
-			if (msg.msgType == DISTANCE) {
-				distanceToNode(msg.nodeId, msg.distance, rcvTime);
-				
-				
-			}
-		}
-		
-		delay(2000);
-	} else {
-		if (radio.available()) {
-			printf("Radio event processed \n\r");
-			unsigned long time = micros();
-			
-			Broadcast msg;
-			bool done = false;
-			while (!done) {
-				done = radio.read(&msg, sizeof(Broadcast));
-			}
-			
-			if (msg.msgType == POSITION) {
-				radioRcvTime = time;
-				_state = RADIORCV;
-			}
-		}
-		
-		if (_state == RADIORCV) {
-			if (micros() - radioRcvTime > 100000) {
-				_state == WAITING;
-			}
-			
-			checkSound();
-		}
+	sendLocSig();
+	unsigned long rcvTime = micros();
+
+	if (radio.available()) {
+		Broadcast msg;
+		radio.read(&msg, sizeof(Broadcast));
+
+		distanceToNode(msg.nodeId, msg.distance, rcvTime);
 	}
+
+	delay(2000);
 }
+
